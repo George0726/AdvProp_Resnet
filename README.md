@@ -13,10 +13,11 @@ This project is developed and tested in the following environments.
 # Training
 
 ~~~
-python Resnet34.py
+python train.py
 ~~~
 
-- resnet_cifar: the ResNet architecture adapted from DeepInversion
-- net: ResNet architecture for advprop
+- train: training the model 
+    tune the parameters: iterations, epsilon,etc.
+- net_rectified: ResNet architecture for advprop
 - split_bn: split the normal BN and auxiliary BN to two separate Resnet34 model
 - compile_to_deepinversion: compile Resnet from "net" to "resnet_cifar"
