@@ -13,7 +13,7 @@ This project is developed and tested in the following environments.
 # Training
 
 ~~~
-python train.py --checkpoint checkpoint/cifar100/resnet50 --dataset cifar100 --gpu-id 3 --mixbn
+python train_from_scarch.py --checkpoint checkpoint/cifar100/resnet50 --dataset cifar100 --gpu-id 3 --mixbn
 ~~~
 
 - train: training the model 

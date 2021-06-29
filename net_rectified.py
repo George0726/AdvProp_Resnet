@@ -281,7 +281,7 @@ class AdvResNet(ResNet):
                 images = torch.cat([x, aux_images], dim=0)
                 targets = torch.cat([labels, aux_label], dim=0)
             self.train()
-            ####################    modified by Qirui, which help with adversial distillation.
+            ####################    modified by Qirui, which help with distillation.
             if self.mixbn:
                 if is_distill:
                     self.apply(to_mix_status)

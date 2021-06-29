@@ -357,8 +357,12 @@ def main():
     logger.plot()
     savefig(os.path.join(args.checkpoint, 'log.eps'))
     
-    test(val_loader, model, criterion, args.epochs, use_cuda)
-    test(val_loader, model, criterion, args.epochs, use_cuda,True, attacker)
+    test_loss, test_acc = test(val_loader, student_model, criterion, start_epoch, use_cuda)
+    print(' Test Loss:  %.8f, Test Acc:  %.2f' % (test_loss, test_acc))
+
+    test_loss, test_acc = test(val_loader, student_model, criterion, start_epoch, use_cuda,attacker,True)
+    print(' Adv Test Loss:  %.8f, Adv Test Acc:  %.2f' % (test_loss, test_acc))
+
 
 
 def train(train_loader, model, criterion, optimizer, epoch, use_cuda, warmup_scheduler, mixbn=False,
@@ -467,7 +471,7 @@ def train(train_loader, model, criterion, optimizer, epoch, use_cuda, warmup_sch
         return (losses.avg, top1.avg)
 
 
-def test(val_loader, model, criterion, epoch, use_cuda, test_adv =False, attacker=NoOpAttacker()):
+def test(val_loader, model, criterion, epoch, use_cuda, attacker=NoOpAttacker(), is_adv = False):
     global best_acc
 
     batch_time = AverageMeter()

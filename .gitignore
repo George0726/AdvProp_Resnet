@@ -5,6 +5,9 @@ utils/fastaug/
 utils/__pycache__/*
 utils/fastaug/*
 
+data/*
+/data/
+
 *.py[cod]
 *$py.class
 /dataset/

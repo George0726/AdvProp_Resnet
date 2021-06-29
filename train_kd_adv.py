@@ -335,7 +335,7 @@ def main():
 
     if args.evaluate_adv:
         print('\nAdversail Evaluation only')
-        test_loss, test_acc = test_adv(val_loader, student_model, criterion, start_epoch, use_cuda,attacker)
+        test_loss, test_acc = test_adv(val_loader, student_model, criterion, start_epoch, use_cuda,attacker,True)
         print(' Adv Test Loss:  %.8f, Adv Test Acc:  %.2f' % (test_loss, test_acc))
         return
 
@@ -398,6 +398,12 @@ def main():
     logger.close()
     logger.plot()
     savefig(os.path.join(args.checkpoint, 'log.eps'))
+
+    test_loss, test_acc = test(val_loader, student_model, criterion, start_epoch, use_cuda)
+    print(' Test Loss:  %.8f, Test Acc:  %.2f' % (test_loss, test_acc))
+
+    test_loss, test_acc = test(val_loader, student_model, criterion, start_epoch, use_cuda,attacker,True)
+    print(' Adv Test Loss:  %.8f, Adv Test Acc:  %.2f' % (test_loss, test_acc))
 
 
 def train(train_loader, T_model,S_model, criterion, optimizer, epoch, use_cuda, warmup_scheduler, mixbn=False,
@@ -535,7 +541,7 @@ def train(train_loader, T_model,S_model, criterion, optimizer, epoch, use_cuda, 
         return (losses.avg, top1.avg)
 
 
-def test(val_loader, model, criterion, epoch, use_cuda):
+def test(val_loader, model, criterion, epoch, use_cuda, attacker=None, is_adv = False):
     global best_acc
 
     batch_time = AverageMeter()
@@ -556,64 +562,12 @@ def test(val_loader, model, criterion, epoch, use_cuda):
         if use_cuda:
             inputs, targets = inputs.cuda(), targets.cuda()
         inputs, targets = torch.autograd.Variable(inputs, volatile=True), torch.autograd.Variable(targets)
+        if is_adv:
+            inputs_adv, label_adv  = attacker.attack(inputs, targets, model, testing=True)
 
         # compute output
         with torch.no_grad():
             outputs, targets = model(inputs, targets)
-            loss = criterion(outputs, targets).mean()
-
-        # measure accuracy and record loss
-        prec1, prec5 = accuracy(outputs.data, targets.data, topk=(1, 5))
-        losses.update(loss.item(), inputs.size(0))
-        top1.update(prec1.item(), inputs.size(0))
-        top5.update(prec5.item(), inputs.size(0))
-
-        # measure elapsed time
-        batch_time.update(time.time() - end)
-        end = time.time()
-
-        # plot progress
-        bar.suffix = '({batch}/{size}) Data: {data:.3f}s | Batch: {bt:.3f}s | Total: {total:} | ETA: {eta:} | Loss: {loss:.4f} | top1: {top1: .4f} | top5: {top5: .4f}'.format(
-            batch=batch_idx + 1,
-            size=len(val_loader),
-            data=data_time.avg,
-            bt=batch_time.avg,
-            total=bar.elapsed_td,
-            eta=bar.eta_td,
-            loss=losses.avg,
-            top1=top1.avg,
-            top5=top5.avg,
-        )
-        bar.next()
-    bar.finish()
-    return (losses.avg, top1.avg)
-
-    
-def test_adv(val_loader, model, criterion, epoch, use_cuda,attacker):
-    global best_acc
-
-    batch_time = AverageMeter()
-    data_time = AverageMeter()
-    losses = AverageMeter()
-    top1 = AverageMeter()
-    top5 = AverageMeter()
-
-    # switch to evaluate mode
-    model.eval()
-
-    end = time.time()
-    bar = Bar('Processing_adv_testing', max=len(val_loader))
-    for batch_idx, (inputs, targets) in enumerate(val_loader):
-        # measure data loading time
-        data_time.update(time.time() - end)
-
-        if use_cuda:
-            inputs, targets = inputs.cuda(), targets.cuda()
-        inputs, targets = torch.autograd.Variable(inputs, volatile=True), torch.autograd.Variable(targets)
-        inputs_adv, label_adv  = attacker.attack(inputs, targets, model)
-        # compute output
-        with torch.no_grad():
-            outputs, targets = model(inputs_adv, label_adv)
             loss = criterion(outputs, targets).mean()
 
         # measure accuracy and record loss
