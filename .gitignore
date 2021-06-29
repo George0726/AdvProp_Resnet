@@ -10,6 +10,8 @@ utils/fastaug/*
 /dataset/
 /checkpoint/
 /checkpoint/*
+/distill/
+/distill/*
 /distill/*
 # C extensions
 *.so
