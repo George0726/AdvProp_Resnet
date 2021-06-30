@@ -52,10 +52,9 @@ default_model_names = sorted(name for name in net_rectified.__dict__ if name.isl
 model_names = default_model_names
 
 # Parse arguments
-parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
+parser = argparse.ArgumentParser(description='PyTorch adv training Training')
 
 # Datasets
-parser.add_argument('-d', '--data', default='path to dataset', type=str)
 parser.add_argument('-j', '--workers', default=4, type=int, metavar='N',
                     help='number of data loading workers (default: 4)')
 # Optimization options
@@ -299,9 +298,13 @@ def main():
         logger.set_names(['Learning Rate', 'Train Loss', 'Valid Loss', 'Train Acc.', 'Valid Acc.'])
 
     if args.evaluate:
-        print('\nEvaluation only')
+        print('\nEvaluation  ')
         test_loss, test_acc = test(val_loader, model, criterion, start_epoch, use_cuda)
         print(' Test Loss:  %.8f, Test Acc:  %.2f' % (test_loss, test_acc))
+
+        print('\nAdversail Evaluation  ')
+        test_loss, test_acc = test(val_loader, model, criterion, start_epoch, use_cuda,attacker,True)
+        print(' Adv Test Loss:  %.8f, Adv Test Acc:  %.2f' % (test_loss, test_acc))
         return
 
     # Train and val
@@ -357,10 +360,10 @@ def main():
     logger.plot()
     savefig(os.path.join(args.checkpoint, 'log.eps'))
     
-    test_loss, test_acc = test(val_loader, student_model, criterion, start_epoch, use_cuda)
+    test_loss, test_acc = test(val_loader, model, criterion, start_epoch, use_cuda)
     print(' Test Loss:  %.8f, Test Acc:  %.2f' % (test_loss, test_acc))
 
-    test_loss, test_acc = test(val_loader, student_model, criterion, start_epoch, use_cuda,attacker,True)
+    test_loss, test_acc = test(val_loader, model, criterion, start_epoch, use_cuda,attacker,True)
     print(' Adv Test Loss:  %.8f, Adv Test Acc:  %.2f' % (test_loss, test_acc))
 
 
@@ -492,8 +495,9 @@ def test(val_loader, model, criterion, epoch, use_cuda, attacker=NoOpAttacker(),
         if use_cuda:
             inputs, targets = inputs.cuda(), targets.cuda()
         inputs, targets = torch.autograd.Variable(inputs, volatile=True), torch.autograd.Variable(targets)
-        if test_adv:
-            inputs, targets  = attacker.attack(inputs, targets, model,testing =True)
+        ############ Qirui modified for adversarial training
+        if is_adv:
+            inputs, targets  = attacker.attack(inputs, targets, model,testing =True, original =True) # origin: if testing don't change the label of data
         # compute output
         with torch.no_grad():
             outputs, targets = model(inputs, targets)
